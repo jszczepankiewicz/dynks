@@ -1,0 +1,31 @@
+LONG TERM GOALS:
+
+- add JMX for readonly statistics
+- add JMX for write operations
+- add metrics support
+
+TODO:
+- add hardened mode
+- add invalidation
+- add more tests (for encoding & type)
+- test whether different contentType are respected
+- check on travis the results
+- add findbugs / pmd checks
+- handle sitepage
+- add documentation
+- review gradle best practices
+- add release plugin
+- release to maven central repo (with sources)
+- check the lowest possible JDK level (6?) & servlet api (Servlet 2.3? by HttpServletResponseWrapper)
+- add tests for TTL
+- check whether multicommand to improve perfomance may be used in jedis
+
+[DONE] remove unused classes
+[DONE] rename all configs to use "dynks" instead of old obsolete
+[DONE] rething package names
+[DONE] clean up dependencies (so that external tools will have access to that)
+[DONE] remove unused tests
+[DONE] refactor packages
+[DONE] finish perfomance debug tracking
+[DONE] remove UTF8 hardcoded in filter + tests against that (reading characterEncoding + contentType)
+[DONE] automate IT testing

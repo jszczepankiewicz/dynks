@@ -1,0 +1,30 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+
+version = '1.0'
+
+allprojects {
+    sourceCompatibility = 1.8
+    tasks.withType(JavaCompile) {
+        options.encoding = 'utf-8'
+    }
+
+/*
+    taken from: http://blog.ehrnhoefer.com/dev/2015/02/28/gradle-sourcefile-encoding.html
+ */
+    idea {
+        project {
+            ipr {
+                withXml { xmlProvider ->
+                    def encoding = xmlProvider.asNode().component.find { it.@name == "Encoding" }
+                    encoding.appendNode("file", [url: "PROJECT", charset: "UTF-8"])
+                }
+            }
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+}
