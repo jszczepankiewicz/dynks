@@ -1,6 +1,6 @@
 # Dynks
 
-[![][travis img]][travis]
+[![https://travis-ci.org/jszczepankiewicz/dynks](https://img.shields.io/travis/rust-lang/rust.svg?style=flat-square)]()
 [![DUB](https://img.shields.io/dub/l/vibe-d.svg?style=flat-square)]()
 [![VersionEye](https://img.shields.io/versioneye/d/ruby/rails.svg?style=flat-square)]()
 
