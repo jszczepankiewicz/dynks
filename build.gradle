@@ -1,7 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 
-
 version = '1.0'
 
 allprojects {
@@ -10,9 +9,6 @@ allprojects {
         options.encoding = 'utf-8'
     }
 
-/*
-    taken from: http://blog.ehrnhoefer.com/dev/2015/02/28/gradle-sourcefile-encoding.html
- */
     idea {
         project {
             ipr {

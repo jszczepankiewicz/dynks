@@ -1,7 +1,7 @@
-version '1.0'
-
 apply plugin: 'java'
 apply plugin: 'jetty'
+
+version '1.0'
 
 task setupIntegrationTesting(type: JettyRun) {
     httpPort = 8080
@@ -16,11 +16,10 @@ task tearDownIntegrationTesting(type: JettyStop) {
 }
 
 dependencies {
+
     compile project(":filter")
+
     compile 'org.apache.commons:commons-lang3:3.4'
-
-    testCompile project(":filter")
-
     compile 'ch.qos.logback:logback-core:1.1.2'
     compile 'ch.qos.logback:logback-classic:1.1.2'
 

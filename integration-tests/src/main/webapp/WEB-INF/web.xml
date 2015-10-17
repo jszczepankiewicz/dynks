@@ -5,28 +5,40 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
          version="2.4">
 
-    <display-name>chimpsey IT suite</display-name>
+    <display-name>dynks IT suite</display-name>
+
     <description>
-        Example application for integration testing of caching filter.
+        Application supporting integration testing of dynks web cache.
     </description>
 
     <filter>
         <filter-name>CachingFilter</filter-name>
         <filter-class>dynks.http.CachingFilter</filter-class>
     </filter>
+
     <filter-mapping>
         <filter-name>CachingFilter</filter-name>
         <url-pattern>/api/*</url-pattern>
     </filter-mapping>
 
     <servlet>
-        <servlet-name>GeneratingServlet</servlet-name>
+        <servlet-name>Utf8Servlet</servlet-name>
         <servlet-class>dynks.test.it.Utf8Servlet</servlet-class>
     </servlet>
 
+    <servlet>
+        <servlet-name>PurgingServlet</servlet-name>
+        <servlet-class>dynks.test.it.PurgingServlet</servlet-class>
+    </servlet>
+
     <servlet-mapping>
-        <servlet-name>GeneratingServlet</servlet-name>
+        <servlet-name>Utf8Servlet</servlet-name>
         <url-pattern>/api/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>PurgingServlet</servlet-name>
+        <url-pattern>/purger/*</url-pattern>
     </servlet-mapping>
 
 </web-app>     

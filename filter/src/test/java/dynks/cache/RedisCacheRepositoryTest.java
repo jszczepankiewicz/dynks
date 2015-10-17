@@ -5,7 +5,6 @@ import dynks.http.ETag;
 import dynks.redis.RedisCacheRepository;
 import dynks.redis.RedisCacheRepositoryConfigBuilder;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -14,6 +13,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static dynks.cache.Entry.*;
 import static dynks.cache.TestValues.UTF8;
@@ -22,6 +22,7 @@ import static dynks.cache.test.DynksAssertions.assertThat;
 import static dynks.http.ETag.SIZEOF_ETAG;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.assertj.core.data.MapEntry.entry;
+import static org.assertj.core.util.Preconditions.checkNotNullOrEmpty;
 import static org.junit.rules.ExpectedException.none;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -38,6 +39,7 @@ public class RedisCacheRepositoryTest {
 
   private static final String JSON_SAVED = "{\"yourName\":\"alice\"}";
   private static final String KEY = "someKeyValue";
+
   private RedisCacheRepository repo;
   private StringBuilder etagBuilder = new StringBuilder(SIZEOF_ETAG);
 
@@ -99,17 +101,30 @@ public class RedisCacheRepositoryTest {
   }
 
   @Test
+  public void upsertValueIfNotExistForEthernalLife() {
+
+    //  given
+    String etag = ETag.of(JSON_SAVED, etagBuilder);
+
+    //  when
+    repo.upsert(KEY, JSON_SAVED, etag, UTF8_JSON, UTF8, regionFor(0, HOURS));
+
+    //  then
+    assertValueExist(KEY, etag, JSON_SAVED, UTF8_JSON, UTF8);
+
+  }
+
+  @Test
   public void upsertValueIfNotExist() {
 
     //  given
     String etag = ETag.of(JSON_SAVED, etagBuilder);
 
     //  when
-    repo.upsert(KEY, JSON_SAVED, etag, UTF8_JSON, UTF8, 999, HOURS);
+    repo.upsert(KEY, JSON_SAVED, etag, UTF8_JSON, UTF8, regionFor(999, HOURS));
 
     //  then
     assertValueExist(KEY, etag, JSON_SAVED, UTF8_JSON, UTF8);
-
   }
 
   @Test
@@ -119,7 +134,7 @@ public class RedisCacheRepositoryTest {
     String payload = "ąśćźżęłóĄŚĆŻŹĘŁÓ";
 
     //  when
-    repo.upsert(KEY, payload, "etag1", UTF8_JSON, UTF8, 999, HOURS);
+    repo.upsert(KEY, payload, "etag1", UTF8_JSON, UTF8, regionFor(999, HOURS));
     CacheQueryResult result = repo.fetchIfChanged(KEY, null);
 
     //  then
@@ -136,12 +151,15 @@ public class RedisCacheRepositoryTest {
     final String newEtag = ETag.of(newContent, etagBuilder);
 
     //  when
-    repo.upsert(KEY, newContent, newEtag, UTF8_JSON, UTF8, 999, HOURS);
+    repo.upsert(KEY, newContent, newEtag, UTF8_JSON, UTF8, regionFor(999, HOURS));
 
     //  then
     assertValueExist(KEY, newEtag, newContent, UTF8_JSON, UTF8);
   }
 
+  private CacheRegion regionFor(long ttl, TimeUnit unit) {
+    return new CacheRegion("test", ttl, unit, new NamespacedURIKeyStrategy("test"));
+  }
 
   /*
    * there is no value for given key, CacheResult will return: upsertNeeded: true, payload: null, storedEtag: null
@@ -230,10 +248,99 @@ public class RedisCacheRepositoryTest {
     assertThat(result).hasPayload(JSON_SAVED).hasStoredEtag(etagExisting).isUpsertNotNeeded();
   }
 
+  @Test
+  public void evictMassiveRegionWithSmallestMaxDeletedInOneBatch() {
 
-  @Ignore
+    //  given
+    CacheRegion perf = forRegion("perf");
+    for (int i = 0; i < 16003; i++) {
+      repo.upsert("tst:perf:perf" + i, "something unusually great abcdefgxihsdfrodfl", "something", UTF8_JSON, UTF8, perf);
+    }
+
+    //  when
+    long removed = repo.evictRegion(perf, 1);
+
+    //  then
+    assertThat(removed).isEqualTo(16003);
+    assertValueNotExist("tst:perf:perf0");
+    assertValueNotExist("tst:perf:perf15000");
+
+  }
+
+  /**
+   * This test may run > 10 sec
+   */
+  @Test
+  public void evictMassiveRegionWithDefaultMaxDeletedInOneBatch() {
+
+    //  given
+    CacheRegion perf = forRegion("perf");
+    for (int i = 0; i < 110003; i++) {
+      repo.upsert("tst:perf:perf" + i, "something unusually great abcdefgxihsdfrodfl", "something", UTF8_JSON, UTF8, perf);
+    }
+
+    //  when
+    long removed = repo.evictRegion(perf);
+
+    //  then
+    assertThat(removed).isEqualTo(110003);
+    assertValueNotExist("tst:perf:perf0");
+    assertValueNotExist("tst:perf:perf110002");
+
+  }
+
+  @Test
+  public void evictEmptyRegion() {
+
+    //  given
+    CacheRegion emptyRegion = forRegion("emptyRegion");
+
+    //  when
+    long removed = repo.evictRegion(emptyRegion);
+
+    //  then
+    assertThat(removed).isEqualTo(0);
+  }
+
+  @Test
+  public void evictAllEntriesFromRegion() {
+
+    //  given
+    CacheRegion users = forRegion("users");
+    CacheRegion logs = forRegion("logs");
+    CacheRegion books = forRegion("books");
+
+    repo.upsert("tst:users:user1", "somecontent", "someetag", UTF8_JSON, UTF8, users);
+    repo.upsert("tst:users:user2", "somecontent", "someetag", UTF8_JSON, UTF8, users);
+    repo.upsert("tst:logs:logs1", "something", "someetag", UTF8_JSON, UTF8, logs);
+    repo.upsert("tst:logs:logs2", "something", "someetag", UTF8_JSON, UTF8, logs);
+    repo.upsert("tst:books:book1", "something", "someetag", UTF8_JSON, UTF8, books);
+
+    //  when
+    repo.evictRegion(logs);
+    repo.evictRegion(books);
+
+    //  then
+    assertValueNotExist("tst:logs:logs1");
+    assertValueNotExist("tst:logs:logs2");
+    assertValueExist("tst:users:user1");
+    assertValueExist("tst:users:user2");
+    assertValueNotExist("tst:books:book1");
+  }
+
+
   @Test
   public void removeKeyIfExist() {
+
+    //  given
+    String etagExisting = ETag.of(JSON_SAVED, etagBuilder);
+    havingEntryCached(KEY, JSON_SAVED, etagExisting, UTF8_JSON, UTF8);
+
+    //  when
+    repo.remove(KEY);
+
+    //  then
+    assertValueNotExist(KEY);
 
   }
 
@@ -243,13 +350,38 @@ public class RedisCacheRepositoryTest {
     return new Jedis("localhost");
   }
 
+  //FIXME: invoke upsert inse
   private void havingEntryCached(String key, String content, String etag, String contentType, String encoding) {
     Jedis jedis = getJedis();
     jedis.hmset(key, new Entry(content, etag, contentType, encoding));
   }
 
+  private CacheRegion forRegion(String id) {
+    final NamespacedURIKeyStrategy strategy = new NamespacedURIKeyStrategy("tst");
+    return new CacheRegion(id, 1800000, TimeUnit.MILLISECONDS, strategy);
+  }
+
+  private void assertValueNotExist(String key) {
+    checkNotNullOrEmpty(key);
+
+    Jedis jedis = getJedis();
+    Map<String, String> out = jedis.hgetAll(key);
+
+    assertThat(out).isEmpty();
+  }
+
+  private void assertValueExist(String key) {
+    checkNotNullOrEmpty(key);
+    Jedis jedis = getJedis();
+    Map<String, String> out = jedis.hgetAll(key);
+
+    assertThat(out).isNotEmpty()
+            .hasSize(4);
+  }
+
   private void assertValueExist(String key, String expectedEtag, String expectedContent, String expectedContentType, String expectedEncoding) {
 
+    checkNotNullOrEmpty(key);
     Jedis jedis = getJedis();
     Map<String, String> out = jedis.hgetAll(key);
 

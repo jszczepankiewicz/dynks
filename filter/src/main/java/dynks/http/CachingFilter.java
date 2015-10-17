@@ -2,6 +2,7 @@ package dynks.http;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import dynks.Frontend;
 import dynks.ProbeFactory.Probe;
 import dynks.cache.*;
 import dynks.redis.RedisCacheRepositoryConfigBuilder;
@@ -23,6 +24,8 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
+ * Filter for acting as web cache layer using ETag cache negotiation.
+ *
  * @author jszczepankiewicz
  * @since 2015-04-14
  */
@@ -31,13 +34,14 @@ public class CachingFilter implements Filter {
   private static final Logger LOG = getLogger(CachingFilter.class);
 
   private CacheRepository cache;
-  private ResponseCacheByURIPolicy policy;
+  private CacheByURIRegionRepository policy;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     Config config = ConfigFactory.load("dynks");
     cache = RedisCacheRepositoryConfigBuilder.build(config);
     policy = ResponseCacheByURIBuilder.build(config);
+    Frontend.initialize(cache, policy);
   }
 
   @Override
@@ -45,7 +49,6 @@ public class CachingFilter implements Filter {
 
     final HttpServletRequest request = (HttpServletRequest) req;
     final HttpServletResponse response = (HttpServletResponse) res;
-
 
     if (GET.equalsIgnoreCase(request.getMethod())) {
 
@@ -64,7 +67,7 @@ public class CachingFilter implements Filter {
           return;
         }
 
-        String key = cacheRegion.getKeyStrategy().keyFor(request);
+        String key = cacheRegion.getKeyStrategy().keyFor(request, cacheRegion);
         String requestEtag = getFrom(request);
         probe.start('f');
         CacheQueryResult result = cache.fetchIfChanged(key, requestEtag);
@@ -84,7 +87,7 @@ public class CachingFilter implements Filter {
           probe.log(etag);
           probe.log("upsert");
           probe.start('u');
-          cache.upsert(key, generated, etag, wrappedResponse.getContentType(), encoding, cacheRegion.getTtl(), cacheRegion.getTtlUnit());
+          cache.upsert(key, generated, etag, wrappedResponse.getContentType(), encoding, cacheRegion);
           probe.stop();
           writeIn(response, etag);
           //  now we need to copy from generated stream into original stream

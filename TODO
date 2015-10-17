@@ -6,10 +6,8 @@ LONG TERM GOALS:
 
 TODO:
 - add hardened mode
-- add invalidation
 - add more tests (for encoding & type)
 - test whether different contentType are respected
-- check on travis the results
 - add findbugs / pmd checks
 - handle sitepage
 - add documentation
@@ -18,7 +16,7 @@ TODO:
 - release to maven central repo (with sources)
 - check the lowest possible JDK level (6?) & servlet api (Servlet 2.3? by HttpServletResponseWrapper)
 - add tests for TTL
-- check whether multicommand to improve perfomance may be used in jedis
+- (code cleanup) centralize builders for test objects (i.e. CacheRegion)
 
 [DONE] remove unused classes
 [DONE] rename all configs to use "dynks" instead of old obsolete
@@ -29,3 +27,6 @@ TODO:
 [DONE] finish perfomance debug tracking
 [DONE] remove UTF8 hardcoded in filter + tests against that (reading characterEncoding + contentType)
 [DONE] automate IT testing
+[DONE] check on travis the results
+[DONE] check whether multicommand to improve perfomance may be used in jedis
+[DONE] invalidation
