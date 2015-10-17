@@ -1,8 +1,8 @@
 # Dynks
 
 [![][travis img]][travis]
-[![][license img]][license]
-[![Dependency Status](https://www.versioneye.com/user/projects/5617a5c8a193340f320001f6/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/5617a5c8a193340f320001f6)
+[![DUB](https://img.shields.io/dub/l/vibe-d.svg?style=flat-square)]()
+[![VersionEye](https://img.shields.io/versioneye/d/ruby/rails.svg?style=flat-square)]()
 
 Dynks is Java Servlet Container web cache using Redis as distributed storage.
 
