@@ -1,5 +1,6 @@
 plugins {
-    id 'nebula.provided-base' version '3.0.3' // if you want provided-base
+    //  to have maven-like provided
+    id 'nebula.provided-base' version '3.0.3'
 }
 
 apply plugin: 'java'
