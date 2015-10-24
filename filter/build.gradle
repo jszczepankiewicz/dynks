@@ -1,3 +1,7 @@
+plugins {
+    id 'nebula.provided-base' version '3.0.3' // if you want provided-base
+}
+
 apply plugin: 'java'
 apply plugin: 'jacoco'
 apply plugin: 'maven'
@@ -41,7 +45,6 @@ dependencies {
 
     compile 'net.jcip:jcip-annotations:1.0'
     compile 'org.slf4j:slf4j-api:1.7.12'
-    compile 'javax.servlet:javax.servlet-api:3.1.0'
     compile 'redis.clients:jedis:2.7.3'
     compile 'com.typesafe:config:1.3.0'
 
@@ -54,6 +57,9 @@ dependencies {
 
     //  we do not want to distribute that with release version of library
     testRuntime 'org.slf4j:slf4j-simple:1.7.12'
+
+    //  thanks to nebula plugins we got provided scope in gradle
+    provided 'javax.servlet:javax.servlet-api:3.1.0'
 
 }
 
