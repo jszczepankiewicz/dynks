@@ -1,10 +1,30 @@
 apply plugin: 'java'
 apply plugin: 'jacoco'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
-version = '1.0'
+archivesBaseName = "dynks"
 
 test.dependsOn(":integration-tests:setupIntegrationTesting")
 test.finalizedBy(":integration-tests:tearDownIntegrationTesting")
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
 
 jacocoTestReport {
     group = "Reporting"
@@ -35,4 +55,49 @@ dependencies {
     //  we do not want to distribute that with release version of library
     testRuntime 'org.slf4j:slf4j-simple:1.7.12'
 
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'Dynks web cache'
+                artifactId 'dynks'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'Web cache library for Java Servlet Container using Redis storage'
+                url 'https://github.com/jszczepankiewicz/dynks'
+
+                scm {
+                    connection 'scm:git:ssh://git@github.com/jszczepankiewicz/dynks.git'
+                    developerConnection 'scm:git:ssh://git@github.com/jszczepankiewicz/dynks.git'
+                    url 'https://github.com/jszczepankiewicz/dynks'
+                }
+
+                licenses {
+                    license {
+                        name 'The MIT License (MIT)'
+                        url 'https://github.com/jszczepankiewicz/dynks/blob/master/LICENSE'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'jszczepankiewicz'
+                        name 'Jaroslaw Szczepankiewicz'
+                    }
+                }
+            }
+        }
+    }
 }

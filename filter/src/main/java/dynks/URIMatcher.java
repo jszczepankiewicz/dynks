@@ -9,7 +9,7 @@ import static java.util.regex.Pattern.compile;
 /**
  * Matcher for strings using very small subset of regexp. All operations are done without allocating any objects on heap
  * which happens when using java regexp (pattern + matcher).
- * <p>
+ *
  *  Perfomance comparision of matching (positive) while using:
  *  <ul>
  *      <li>Precompiled "/api/v1/bestsellers/\\d+" for java regexp</li>
@@ -17,7 +17,6 @@ import static java.util.regex.Pattern.compile;
  *  </ul>
  *  For Patterned url execution took: 64 ns whereas java regexp 462 ns on Intel i7-4790K.
  *
- * </p>
  * Example:
  * "Some{X}abc" where {X} is special driving character:
  * <ul>
@@ -32,7 +31,7 @@ import static java.util.regex.Pattern.compile;
  * but will match false against:
  * <ul>
  * <li>/books/0a/authors</li>
- * <li>/books/1/author</li> *
+ * <li>/books/1/author</li>
  * </ul>
  * <p>
  * Not supported patterns:

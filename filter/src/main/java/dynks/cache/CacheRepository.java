@@ -16,7 +16,7 @@ public interface CacheRepository {
    * payload contain null, storedEtag: null</li>
    * <li>there is value for given key and etag != storedEtag for given value, CacheResult will return: upsertNeeded: false,
    * payload contain latest version, storedEtag: etag corresponding with given value</li>
-   * <li>client does not provide etag (null) -> upsertNeeded: depends on whether cache contains value</li>
+   * <li>client does not provide etag (null): upsertNeeded: depends on whether cache contains value</li>
    * </ul>
    *
    * @param key

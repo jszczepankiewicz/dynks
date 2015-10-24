@@ -1,10 +1,14 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 
-version = '1.0'
+
+subprojects {
+    sourceCompatibility = 1.8
+    group = "com.github.jszczepankiewicz"
+    version = "0.9.4"
+}
 
 allprojects {
-    sourceCompatibility = 1.8
     tasks.withType(JavaCompile) {
         options.encoding = 'utf-8'
     }
@@ -24,3 +28,4 @@ allprojects {
         mavenCentral()
     }
 }
+
