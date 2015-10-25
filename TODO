@@ -12,9 +12,7 @@ TODO:
 - handle sitepage
 - add documentation
 - review gradle best practices
-- add release plugin
-- release to maven central repo (with sources)
-- check the lowest possible JDK level (6?) & servlet api (Servlet 2.3? by HttpServletResponseWrapper)
+- check the lowest possible servlet api (Servlet 2.3? by HttpServletResponseWrapper)
 - add tests for TTL
 - (code cleanup) centralize builders for test objects (i.e. CacheRegion)
 
@@ -30,3 +28,5 @@ TODO:
 [DONE] check on travis the results
 [DONE] check whether multicommand to improve perfomance may be used in jedis
 [DONE] invalidation
+[DONE] add release plugin
+[DONE[ release to maven central repo (with sources)

@@ -61,8 +61,14 @@ dependencies {
 
     //  thanks to nebula plugins we got provided scope in gradle
     provided 'javax.servlet:javax.servlet-api:3.1.0'
-
 }
+
+/*
+    In travis-ci we do not have gradle.properties file containing credentials. To allow building without errors
+    we will define local copies taken from gradle.properties or set it to foo when not needed.
+ */
+def releaseOssrhUsername = hasProperty('ossrhUsername') ? ossrhUsername : 'Property ossrhUsername not defined'
+def releaseOssrhPassword = hasProperty('ossrhPassword') ? ossrhPassword : 'Property ossrhPassword not defined'
 
 uploadArchives {
     repositories {
@@ -70,11 +76,11 @@ uploadArchives {
             beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
             repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
+                authentication(userName: releaseOssrhUsername, password: releaseOssrhPassword)
             }
 
             snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
+                authentication(userName: releaseOssrhUsername, password: releaseOssrhPassword)
             }
 
             pom.project {
