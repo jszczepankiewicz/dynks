@@ -4,7 +4,7 @@ apply plugin: 'idea'
 subprojects {
     sourceCompatibility = 1.8
     group = "com.github.jszczepankiewicz"
-    version = "0.9.7"
+    version = "0.9.8"
 }
 
 allprojects {

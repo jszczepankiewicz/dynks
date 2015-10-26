@@ -1,6 +1,8 @@
 # Dynks
 
+
 [![Travis](https://img.shields.io/travis/rust-lang/rust.svg?style=flat-square)](https://travis-ci.org/jszczepankiewicz/dynks)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.jszczepankiewicz/dynks/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.jszczepankiewicz/dynks)
 [![DUB](https://img.shields.io/dub/l/vibe-d.svg?style=flat-square)](LICENSE)
 [![VersionEye](https://img.shields.io/versioneye/d/ruby/rails.svg?style=flat-square)](https://www.versioneye.com/user/projects/5617a5c8a193340f320001f6)
 
@@ -27,12 +29,24 @@ Prerequisites
 
 How do I use it?
 ---------------------
-Currently no maven release available so first you need to build it with Gradle:
+For Maven:
 
 ```
-cd filter
-gradle jar
+<dependency>
+    <groupId>com.github.jszczepankiewicz</groupId>
+    <artifactId>dynks</artifactId>
+    <version>0.9.8</version>
+</dependency>
 ```
+
+For Gradle:
+
+```
+compile 'com.github.jszczepankiewicz:dynks:0.9.8'
+```
+
+NOTE: before actually using please check latest release version on: 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.jszczepankiewicz/dynks/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.jszczepankiewicz/dynks)
 
 How to test
 ---------------------
