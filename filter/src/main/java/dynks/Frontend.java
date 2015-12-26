@@ -3,6 +3,7 @@ package dynks;
 import dynks.cache.CacheRegion;
 import dynks.cache.CacheRegionRepository;
 import dynks.cache.CacheRepository;
+import dynks.cache.CacheRepositoryException;
 
 import java.util.Optional;
 
@@ -128,7 +129,7 @@ public class Frontend {
    * @param id
    * @return
    */
-  public long evictRegion(String id) {
+  public long evictRegion(String id) throws CacheRepositoryException {
     return repository.evictRegion(resolveRegion(id));
   }
 
@@ -140,7 +141,7 @@ public class Frontend {
    * @return
    * @see Frontend#evictRegion(String) for more details
    */
-  public long evictRegion(String id, int maxEntriesDeletedInOneBatch) {
+  public long evictRegion(String id, int maxEntriesDeletedInOneBatch) throws CacheRepositoryException {
 
     if (maxEntriesDeletedInOneBatch < 1) {
       throw new IllegalArgumentException("maxEntriesDeletedInOneBatch should not be at least 1");

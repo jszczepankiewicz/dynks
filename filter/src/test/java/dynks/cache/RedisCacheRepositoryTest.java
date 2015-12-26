@@ -1,7 +1,7 @@
 package dynks.cache;
 
 import com.typesafe.config.ConfigFactory;
-import dynks.http.ETag;
+import dynks.cache.test.CauseMatcher;
 import dynks.redis.RedisCacheRepository;
 import dynks.redis.RedisCacheRepositoryConfigBuilder;
 import org.junit.Before;
@@ -20,6 +20,7 @@ import static dynks.cache.TestValues.UTF8;
 import static dynks.cache.TestValues.UTF8_JSON;
 import static dynks.cache.test.DynksAssertions.assertThat;
 import static dynks.http.ETag.SIZEOF_ETAG;
+import static dynks.http.ETag.of;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.assertj.core.data.MapEntry.entry;
 import static org.assertj.core.util.Preconditions.checkNotNullOrEmpty;
@@ -57,54 +58,54 @@ public class RedisCacheRepositoryTest {
   }
 
   @Test
-  public void throwIAEOnNulledKeyForFetchIfChanged() {
+  public void throwIAEOnNulledKeyForFetchIfChanged() throws CacheRepositoryException {
 
     //  then
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("Key to upsert should not be null");
+    thrown.expect(CacheRepositoryException.class);
+    thrown.expectCause(new CauseMatcher(IllegalArgumentException.class, "Key to upsert should not be null"));
 
     //  when
     repo.fetchIfChanged(null, "someEtag");
   }
 
   @Test
-  public void throwIAEOnNulledKeyForFetchIfChangedNulledEtag() {
+  public void throwIAEOnNulledKeyForFetchIfChangedNulledEtag() throws CacheRepositoryException {
 
     //  then
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("Key to upsert should not be null");
+    thrown.expect(CacheRepositoryException.class);
+    thrown.expectCause(new CauseMatcher(IllegalArgumentException.class, "Key to upsert should not be null"));
 
     //  when
     repo.fetchIfChanged(null, null);
   }
 
   @Test
-  public void throwIAEOnEmptyKeyForFetchIfChangedNulledEtag() {
+  public void throwIAEOnEmptyKeyForFetchIfChangedNulledEtag() throws CacheRepositoryException {
 
     //  then
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("Key to upsert should not be empty");
+    thrown.expect(CacheRepositoryException.class);
+    thrown.expectCause(new CauseMatcher(IllegalArgumentException.class, "Key to upsert should not be empty"));
 
     //  when
     repo.fetchIfChanged(" ", null);
   }
 
   @Test
-  public void throwIAEOnEmptyKeyForFetchIfChanged() {
+  public void throwIAEOnEmptyKeyForFetchIfChanged() throws CacheRepositoryException {
 
     //  then
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("Key to upsert should not be empty");
+    thrown.expect(CacheRepositoryException.class);
+    thrown.expectCause(new CauseMatcher(IllegalArgumentException.class, "Key to upsert should not be empty"));
 
     //  when
     repo.fetchIfChanged(" ", "someEtag");
   }
 
   @Test
-  public void upsertValueIfNotExistForEthernalLife() {
+  public void upsertValueIfNotExistForEthernalLife() throws CacheRepositoryException {
 
     //  given
-    String etag = ETag.of(JSON_SAVED, etagBuilder);
+    String etag = of(JSON_SAVED, etagBuilder);
 
     //  when
     repo.upsert(KEY, JSON_SAVED, etag, UTF8_JSON, UTF8, regionFor(0, HOURS));
@@ -115,10 +116,10 @@ public class RedisCacheRepositoryTest {
   }
 
   @Test
-  public void upsertValueIfNotExist() {
+  public void upsertValueIfNotExist() throws CacheRepositoryException {
 
     //  given
-    String etag = ETag.of(JSON_SAVED, etagBuilder);
+    String etag = of(JSON_SAVED, etagBuilder);
 
     //  when
     repo.upsert(KEY, JSON_SAVED, etag, UTF8_JSON, UTF8, regionFor(999, HOURS));
@@ -128,7 +129,7 @@ public class RedisCacheRepositoryTest {
   }
 
   @Test
-  public void utf8UpsertShouldReturnCorrectValuesFromCache() {
+  public void utf8UpsertShouldReturnCorrectValuesFromCache() throws CacheRepositoryException {
 
     //  given
     String payload = "ąśćźżęłóĄŚĆŻŹĘŁÓ";
@@ -143,12 +144,12 @@ public class RedisCacheRepositoryTest {
   }
 
   @Test
-  public void upsertValueEvenIfKeyExistsWithDifferentEtag() {
+  public void upsertValueEvenIfKeyExistsWithDifferentEtag() throws CacheRepositoryException {
 
     //  given
     havingEntryCached(KEY, JSON_SAVED, "someetagxyz", UTF8_JSON, UTF8);
     final String newContent = "[]";
-    final String newEtag = ETag.of(newContent, etagBuilder);
+    final String newEtag = of(newContent, etagBuilder);
 
     //  when
     repo.upsert(KEY, newContent, newEtag, UTF8_JSON, UTF8, regionFor(999, HOURS));
@@ -157,6 +158,7 @@ public class RedisCacheRepositoryTest {
     assertValueExist(KEY, newEtag, newContent, UTF8_JSON, UTF8);
   }
 
+  //  FIXME: share with hardened test
   private CacheRegion regionFor(long ttl, TimeUnit unit) {
     return new CacheRegion("test", ttl, unit, new NamespacedURIKeyStrategy("test"));
   }
@@ -165,7 +167,7 @@ public class RedisCacheRepositoryTest {
    * there is no value for given key, CacheResult will return: upsertNeeded: true, payload: null, storedEtag: null
    */
   @Test
-  public void detectMissingEntryOnFetch() {
+  public void detectMissingEntryOnFetch() throws CacheRepositoryException {
 
     //  given
     final String key = "sk1";
@@ -184,7 +186,7 @@ public class RedisCacheRepositoryTest {
    */
 
   @Test
-  public void returnContentClientFirstTimeContentNotYetCached() {
+  public void returnContentClientFirstTimeContentNotYetCached() throws CacheRepositoryException {
 
     //  when
     CacheQueryResult result = repo.fetchIfChanged(KEY, null);
@@ -199,10 +201,10 @@ public class RedisCacheRepositoryTest {
    * storedEtag: corresponding etag value associated with given key
    */
   @Test
-  public void returnEntryFromCacheWhenEtagUnknown() {
+  public void returnEntryFromCacheWhenEtagUnknown() throws CacheRepositoryException {
 
     //  given
-    String etagExisting = ETag.of(JSON_SAVED, etagBuilder);
+    String etagExisting = of(JSON_SAVED, etagBuilder);
     havingEntryCached(KEY, JSON_SAVED, etagExisting, UTF8_JSON, UTF8);
 
     //  when
@@ -217,10 +219,10 @@ public class RedisCacheRepositoryTest {
    *  payload contain null, storedEtag: null
    */
   @Test
-  public void fetchNotNeededAsCachedVersionNotChanged() {
+  public void fetchNotNeededAsCachedVersionNotChanged() throws CacheRepositoryException {
 
     //  given
-    String etagExisting = ETag.of(JSON_SAVED, etagBuilder);
+    String etagExisting = of(JSON_SAVED, etagBuilder);
     havingEntryCached(KEY, JSON_SAVED, etagExisting, UTF8_JSON, UTF8);
 
     //  when
@@ -235,10 +237,10 @@ public class RedisCacheRepositoryTest {
    * payload contain latest version, storedEtag: etag corresponding with given value
    */
   @Test
-  public void fetchReturnedNewerEntry() {
+  public void fetchReturnedNewerEntry() throws CacheRepositoryException {
 
     //  given
-    String etagExisting = ETag.of(JSON_SAVED, etagBuilder);
+    String etagExisting = of(JSON_SAVED, etagBuilder);
     havingEntryCached(KEY, JSON_SAVED, etagExisting, UTF8_JSON, UTF8);
 
     //  when
@@ -249,7 +251,7 @@ public class RedisCacheRepositoryTest {
   }
 
   @Test
-  public void evictMassiveRegionWithSmallestMaxDeletedInOneBatch() {
+  public void evictMassiveRegionWithSmallestMaxDeletedInOneBatch() throws CacheRepositoryException {
 
     //  given
     CacheRegion perf = forRegion("perf");
@@ -271,7 +273,7 @@ public class RedisCacheRepositoryTest {
    * This test may run > 10 sec
    */
   @Test
-  public void evictMassiveRegionWithDefaultMaxDeletedInOneBatch() {
+  public void evictMassiveRegionWithDefaultMaxDeletedInOneBatch() throws CacheRepositoryException {
 
     //  given
     CacheRegion perf = forRegion("perf");
@@ -290,7 +292,7 @@ public class RedisCacheRepositoryTest {
   }
 
   @Test
-  public void evictEmptyRegion() {
+  public void evictEmptyRegion() throws CacheRepositoryException {
 
     //  given
     CacheRegion emptyRegion = forRegion("emptyRegion");
@@ -303,7 +305,7 @@ public class RedisCacheRepositoryTest {
   }
 
   @Test
-  public void evictAllEntriesFromRegion() {
+  public void evictAllEntriesFromRegion() throws CacheRepositoryException {
 
     //  given
     CacheRegion users = forRegion("users");
@@ -330,10 +332,10 @@ public class RedisCacheRepositoryTest {
 
 
   @Test
-  public void removeKeyIfExist() {
+  public void removeKeyIfExist() throws CacheRepositoryException {
 
     //  given
-    String etagExisting = ETag.of(JSON_SAVED, etagBuilder);
+    String etagExisting = of(JSON_SAVED, etagBuilder);
     havingEntryCached(KEY, JSON_SAVED, etagExisting, UTF8_JSON, UTF8);
 
     //  when

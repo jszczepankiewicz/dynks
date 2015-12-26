@@ -106,8 +106,6 @@ public class Client {
         request.addHeader("Accept", expectedContentType);
       }
 
-      System.out.println("Executing request " + request.getRequestLine());
-
       // Create a custom response handler
       ResponseHandler<ServerResponse> responseHandler = response -> {
 
@@ -134,9 +132,6 @@ public class Client {
       };
 
       ServerResponse responseBody = httpclient.execute(request, responseHandler);
-
-      System.out.println("----------------------------------------");
-      System.out.println(responseBody);
 
       return responseBody;
 

@@ -1,6 +1,11 @@
 package dynks.cache;
 
 /**
+ * Repository for accessing caching layer. It is critical to properly implement all methods that may potentially fail
+ * due to persistence layer to throw CacheRepositoryException in case of any underlying problems so that Hardened mode
+ * will be properly handled by the CachingFilter. Please take a look at RedisCacheRepositoryHardenedTest to see example
+ * test against that.
+ *
  * @author jszczepankiewicz
  * @since 2015-04-01.
  */
@@ -23,7 +28,7 @@ public interface CacheRepository {
    * @param etag
    * @return
    */
-  CacheQueryResult fetchIfChanged(String key, String etag);
+  CacheQueryResult fetchIfChanged(String key, String etag) throws CacheRepositoryException;
 
   /**
    * Insert or update value identified by key and mark with given etag regardless of existing etag value.
@@ -34,7 +39,7 @@ public interface CacheRepository {
    * @param contentType contentType
    * @param encoding    encoding of content
    */
-  void upsert(String key, String content, String etag, String contentType, String encoding, CacheRegion region);
+  void upsert(String key, String content, String etag, String contentType, String encoding, CacheRegion region) throws CacheRepositoryException;
 
   /**
    * Remove single value identified by key. WARNING: current implementation does NOT remove any tracking of this
@@ -42,7 +47,7 @@ public interface CacheRepository {
    *
    * @param key value identifier (not null)
    */
-  void remove(String key);
+  void remove(String key) throws CacheRepositoryException;
 
   /**
    * Evicts all entries belonging to given region.
@@ -51,7 +56,7 @@ public interface CacheRepository {
    * @param region to be purged
    * @return number of removed entries
    */
-  long evictRegion(CacheRegion region);
+  long evictRegion(CacheRegion region) throws CacheRepositoryException;
 
   /**
    * Evict all entries from given region using specified max entries deleted in one batch. Removing entries
@@ -66,7 +71,7 @@ public interface CacheRepository {
    *                                    redis command.
    * @return number of removed entries
    */
-  long evictRegion(CacheRegion region, int maxEntriesDeletedInOneBatch);
+  long evictRegion(CacheRegion region, int maxEntriesDeletedInOneBatch) throws CacheRepositoryException;
 
   /**
    * Clean up resources.

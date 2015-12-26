@@ -3,7 +3,7 @@ package dynks.redis;
 import dynks.cache.CacheQueryResult;
 import dynks.cache.CacheRegion;
 import dynks.cache.CacheRepository;
-import dynks.cache.Entry;
+import dynks.cache.CacheRepositoryException;
 import org.slf4j.Logger;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -24,6 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class RedisCacheRepository implements CacheRepository {
 
   private static final Logger LOG = getLogger(RedisCacheRepository.class);
+
   private final DeleteAllEntriesInRegionCommand deleteCommand = new DeleteAllEntriesInRegionCommand();
   private final JedisPool pool;
   private final JedisPoolConfig poolConfig;
@@ -36,18 +37,19 @@ public class RedisCacheRepository implements CacheRepository {
 
   /**
    * Constructor of RedisCacheRepository. It should be created only internally so that default access specified.
+   * TODO: do we really need all of this passed / stored at field level?
    *
    * @param poolConfig
    * @param host
    * @param port
    * @param maxEntriesDeletedInOneBatch
    */
-  RedisCacheRepository(JedisPoolConfig poolConfig, String host, int port, int maxEntriesDeletedInOneBatch) {
+  RedisCacheRepository(JedisPoolConfig poolConfig, String host, int port, int maxEntriesDeletedInOneBatch, JedisPool pool) {
 
     this.host = host;
     this.port = port;
     this.poolConfig = poolConfig;
-    this.pool = new JedisPool(poolConfig, host, port);
+    this.pool = pool;
     this.maxEntriesDeletedInOneBatch = maxEntriesDeletedInOneBatch;
   }
 
@@ -79,85 +81,104 @@ public class RedisCacheRepository implements CacheRepository {
   }
 
   @Override
-  public CacheQueryResult fetchIfChanged(String key, String etag) {
+  public CacheQueryResult fetchIfChanged(String key, String etag) throws CacheRepositoryException {
 
-    if (key == null) {
-      throw new IllegalArgumentException("Key to upsert should not be null");
-    }
+    try {
 
-    if (key.trim().length() == 0) {
-      throw new IllegalArgumentException("Key to upsert should not be empty");
-    }
+      if (key == null) {
+        throw new IllegalArgumentException("Key to upsert should not be null");
+      }
 
-    try (Jedis jedis = pool.getResource()) {
+      if (key.trim().length() == 0) {
+        throw new IllegalArgumentException("Key to upsert should not be empty");
+      }
 
-      //  client does not have any version, query for both content + etag
-      if (etag == null) {
+      try (Jedis jedis = pool.getResource()) {
+
+        //  client does not have any version, query for both content + etag
+        if (etag == null) {
+          return getEntryAssumingCached(jedis, key);
+        }
+
+        // get value of etag assuming key exists. This is less costly as checking if key exists and get
+        String cachedEtag = jedis.hget(key, ETAG);
+
+        if (cachedEtag == null) {
+          return NO_RESULT_FOUND;
+        }
+
+        if (cachedEtag.equals(etag)) {
+          return RESULT_FOUND_BUT_NOT_CHANGED;
+        }
+
+        /*
+          entry in cache different, we assume cached entry is newer than on client side
+          we need also to take into consideration that durint last check above entry expired
+          thus may not exist when queried for full content.
+        */
         return getEntryAssumingCached(jedis, key);
       }
+    } catch (Exception e) {
+      throw new CacheRepositoryException(e);
+    }
+  }
 
-            /*
-                get value of etag assuming key exists. This is less costly as checking if key exists and get
-             */
-      String cachedEtag = jedis.hget(key, ETAG);
+  @Override
+  public void upsert(String key, String content, String etag, String contentType, String encoding, CacheRegion region) throws CacheRepositoryException {
+    try {
+      try (Jedis jedis = pool.getResource()) {
 
-      if (cachedEtag == null) {
-        return NO_RESULT_FOUND;
+        if (region.getTtl() == 0) {
+          jedis.hmset(key, new dynks.cache.Entry(content, etag, contentType, encoding));
+        } else {
+          Transaction t = jedis.multi();
+          t.hmset(key, new dynks.cache.Entry(content, etag, contentType, encoding));
+          t.expire(key, region.getTtlInSeconds());
+          t.exec();
+        }
+      }
+    } catch (Exception e) {
+      throw new CacheRepositoryException(e);
+    }
+  }
+
+  @Override
+  public void remove(String key) throws CacheRepositoryException {
+
+    try {
+      try (Jedis jedis = pool.getResource()) {
+        jedis.del(key);
+      }
+    } catch (Exception e) {
+      throw new CacheRepositoryException(e);
+    }
+  }
+
+  @Override
+  public long evictRegion(CacheRegion region) throws CacheRepositoryException {
+    try {
+      return evictRegion(region, maxEntriesDeletedInOneBatch);
+    } catch (CacheRepositoryException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new CacheRepositoryException(e);
+    }
+  }
+
+  @Override
+  public long evictRegion(CacheRegion region, int maxEntriesDeletedInOneBatch) throws CacheRepositoryException {
+    try {
+      long start = nanoTime();
+      Long removed = 0L;
+      try (Jedis jedis = pool.getResource()) {
+        removed = deleteCommand.execute(jedis, region, maxEntriesDeletedInOneBatch);
       }
 
-      if (cachedEtag.equals(etag)) {
-        return RESULT_FOUND_BUT_NOT_CHANGED;
-      }
-
-            /*
-              entry in cache different, we assume cached entry is newer than on client side
-              we need also to take into consideration that durint last check above entry expired
-              thus may not exist when queried for full content.
-             */
-      return getEntryAssumingCached(jedis, key);
+      LOG.debug("Evicted {} entries from region '{}' in {} ms ", removed, region.getId(), NANOSECONDS.toMillis(nanoTime() - start));
+      return removed;
+    } catch (Exception e) {
+      throw new CacheRepositoryException(e);
     }
-  }
-
-  @Override
-  public void upsert(String key, String content, String etag, String contentType, String encoding, CacheRegion region) {
-
-    try (Jedis jedis = pool.getResource()) {
-
-      if (region.getTtl() == 0) {
-        jedis.hmset(key, new Entry(content, etag, contentType, encoding));
-      } else {
-        Transaction t = jedis.multi();
-        t.hmset(key, new Entry(content, etag, contentType, encoding));
-        t.expire(key, region.getTtlInSeconds());
-        t.exec();
-      }
-    }
-  }
-
-  @Override
-  public void remove(String key) {
-
-    try (Jedis jedis = pool.getResource()) {
-      jedis.del(key);
-    }
-  }
-
-  @Override
-  public long evictRegion(CacheRegion region) {
-    return evictRegion(region, maxEntriesDeletedInOneBatch);
-  }
-
-  @Override
-  public long evictRegion(CacheRegion region, int maxEntriesDeletedInOneBatch) {
-
-    long start = nanoTime();
-    Long removed = 0L;
-    try (Jedis jedis = pool.getResource()) {
-      removed = deleteCommand.execute(jedis, region, maxEntriesDeletedInOneBatch);
-    }
-
-    LOG.debug("Evicted {} entries from region '{}' in {} ms ", removed, region.getId(), NANOSECONDS.toMillis(nanoTime() - start));
-    return removed;
   }
 
 

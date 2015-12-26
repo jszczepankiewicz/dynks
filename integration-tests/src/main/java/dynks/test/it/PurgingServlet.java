@@ -1,6 +1,7 @@
 package dynks.test.it;
 
 import dynks.Frontend;
+import dynks.cache.CacheRepositoryException;
 import org.slf4j.Logger;
 
 import javax.servlet.ServletException;
@@ -41,12 +42,16 @@ public class PurgingServlet extends HttpServlet {
     long evicted;
     int maxEntriesDeletedInOneBatch;
 
-    if (param != null) {
-      maxEntriesDeletedInOneBatch = valueOf(param);
-      evicted = frontend.evictRegion(region, maxEntriesDeletedInOneBatch);
-    } else {
-      maxEntriesDeletedInOneBatch = frontend.getDefaultMaxEntriesDeletedInOneBatch();
-      evicted = frontend.evictRegion(region);
+    try {
+      if (param != null) {
+        maxEntriesDeletedInOneBatch = valueOf(param);
+        evicted = frontend.evictRegion(region, maxEntriesDeletedInOneBatch);
+      } else {
+        maxEntriesDeletedInOneBatch = frontend.getDefaultMaxEntriesDeletedInOneBatch();
+        evicted = frontend.evictRegion(region);
+      }
+    } catch (CacheRepositoryException e) {
+      throw new ServletException(e);
     }
 
     LOG.info("Evicted {} entries from region: '{}' with maxEntriesDeletedInOneBatch: {}", evicted, region, maxEntriesDeletedInOneBatch);

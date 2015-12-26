@@ -5,8 +5,7 @@ LONG TERM GOALS:
 - add metrics support
 
 TODO:
-- add hardened mode
-- add more tests (for encoding & type)
+- add more tests (for encoding & expectedType)
 - test whether different contentType are respected
 - add findbugs / pmd checks
 - handle sitepage
@@ -15,10 +14,10 @@ TODO:
 - check the lowest possible servlet api (Servlet 2.3? by HttpServletResponseWrapper)
 - add tests for TTL
 - (code cleanup) centralize builders for test objects (i.e. CacheRegion)
-
+[DONE] add hardened mode
 [DONE] remove unused classes
 [DONE] rename all configs to use "dynks" instead of old obsolete
-[DONE] rething package names
+[DONE] rethink package names
 [DONE] clean up dependencies (so that external tools will have access to that)
 [DONE] remove unused tests
 [DONE] refactor packages

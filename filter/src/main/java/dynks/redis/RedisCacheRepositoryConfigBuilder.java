@@ -2,6 +2,7 @@ package dynks.redis;
 
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
+import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -78,6 +79,6 @@ public class RedisCacheRepositoryConfigBuilder {
     }
     LOG.debug("\tMaxEntriesDeletedInOneBatch: {}", maxEntriesDeletedInOneBatch);
 
-    return new RedisCacheRepository(poolConfig, host, port, maxEntriesDeletedInOneBatch);
+    return new RedisCacheRepository(poolConfig, host, port, maxEntriesDeletedInOneBatch, new JedisPool(poolConfig, host, port));
   }
 }

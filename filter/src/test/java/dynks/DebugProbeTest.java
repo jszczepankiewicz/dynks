@@ -103,10 +103,11 @@ public class DebugProbeTest {
         sleep(0, 150);
         probe.stop('e', nanoStart);
         probe.log("finishing");
+      probe.log("a1", "a2");
 
         //  then
         probe.flushLog();
-        assertThat(getLoggedValue(log)).matches("s:\\d+ e:\\d+ µs\\|starting\\|executing\\|finishing\\|");
+      assertThat(getLoggedValue(log)).matches("s:\\d+ e:\\d+ µs\\|starting\\|executing\\|finishing\\|a1\\|a2\\|");
     }
 
     @Test
