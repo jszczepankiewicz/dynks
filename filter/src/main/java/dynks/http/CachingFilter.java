@@ -35,10 +35,12 @@ public class CachingFilter implements Filter {
 
   private CacheRepository cache;
   private CacheByURIRegionRepository policy;
+  private boolean hardenedModeEnabled;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     Config config = ConfigFactory.load("dynks");
+    hardenedModeEnabled = config.getBoolean("dynks.hardenedMode");
     cache = RedisCacheRepositoryConfigBuilder.build(config);
     policy = ResponseCacheByURIBuilder.build(config);
     Frontend.initialize(cache, policy);
@@ -85,7 +87,6 @@ public class CachingFilter implements Filter {
           probe.log(baos.size());
           String etag = of(generated, new StringBuilder(SIZEOF_ETAG));
           probe.log(etag);
-          probe.log("upsert");
           probe.start('u');
           cache.upsert(key, generated, etag, wrappedResponse.getContentType(), encoding, cacheRegion);
           probe.stop();
@@ -116,6 +117,8 @@ public class CachingFilter implements Filter {
             return;
           }
         }
+      } catch (CacheRepositoryException e) {
+        onRepositoryError(e, request, response, chain, probe);
       } finally {
         probe.stop('a', nanoStart);
         probe.flushLog();
@@ -125,7 +128,18 @@ public class CachingFilter implements Filter {
       chain.doFilter(req, res);
       return;
     }
+  }
 
+  private void onRepositoryError(CacheRepositoryException e, HttpServletRequest request, HttpServletResponse response, FilterChain chain, Probe probe) throws ServletException, IOException {
+
+    if (hardenedModeEnabled) {
+      probe.log("passthrough-on-error");
+      LOG.warn("Passthrough-on-error {}:{}", e.getCause().getClass().toString(), e.getCause().getMessage());
+      chain.doFilter(request, response);
+    } else {
+      LOG.error("CacheRepositoryException occurred and hardened mode is disabled", e);
+      throw new ServletException(e);
+    }
   }
 
   private void doFiltering(FilterChain chain, Probe probe, ServletRequest req, ServletResponse res) throws IOException, ServletException {

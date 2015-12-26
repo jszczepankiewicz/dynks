@@ -1,18 +1,18 @@
 package dynks;
 
-import org.assertj.core.api.AbstractAssert;
 import dynks.cache.CachedContent;
+import org.assertj.core.api.AbstractAssert;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import static dynks.http.ETag.ETAG_RESPONSE_HEADER;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
-import static dynks.http.ETag.ETAG_RESPONSE_HEADER;
 
 /**
  * @author jszczepankiewicz
@@ -32,17 +32,6 @@ public class HttpServletResponseAssert extends AbstractAssert<HttpServletRespons
         isNotNull();
 
         verify(actual, times(1)).setStatus(code);
-
-
-        /*String assertjErrorMessage = "\nExpected status of:\n  <%s>\nto be:\n  <%d>\nbut was:\n  <%d>";
-
-        int actualCode = actual.getStatus();
-
-        if (actualCode != code) {
-            failWithMessage(assertjErrorMessage, actual, code, actualCode);
-        }*/
-
-
         return this;
     }
 
