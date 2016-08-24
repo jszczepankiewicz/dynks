@@ -5,6 +5,7 @@ import com.typesafe.config.ConfigFactory;
 import dynks.Frontend;
 import dynks.ProbeFactory.Probe;
 import dynks.cache.*;
+import dynks.jmx.JmxServer;
 import dynks.redis.RedisCacheRepositoryConfigBuilder;
 import org.slf4j.Logger;
 
@@ -18,6 +19,7 @@ import static dynks.ProbeFactory.getProbe;
 import static dynks.cache.CacheRegion.Cacheability.PASSTHROUGH;
 import static dynks.http.ETag.*;
 import static dynks.http.HttpMethod.GET;
+import static dynks.jmx.Configuration.HARDENED_MODE;
 import static java.lang.System.nanoTime;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
@@ -36,14 +38,17 @@ public class CachingFilter implements Filter {
   private CacheRepository cache;
   private CacheByURIRegionRepository policy;
   private boolean hardenedModeEnabled;
+  private JmxServer jmxServer;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     Config config = ConfigFactory.load("dynks");
-    hardenedModeEnabled = config.getBoolean("dynks.hardenedMode");
+    hardenedModeEnabled = config.getBoolean(HARDENED_MODE);
     cache = RedisCacheRepositoryConfigBuilder.build(config);
     policy = ResponseCacheByURIBuilder.build(config);
     Frontend.initialize(cache, policy);
+    jmxServer = new JmxServer(config);
+    jmxServer.start();
   }
 
   @Override

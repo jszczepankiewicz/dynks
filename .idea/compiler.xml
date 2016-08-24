@@ -19,5 +19,13 @@
         <processorPath useClasspath="true" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="dynks_main" target="1.8" />
+      <module name="dynks_test" target="1.8" />
+      <module name="filter_main" target="1.8" />
+      <module name="filter_test" target="1.8" />
+      <module name="integration-tests_main" target="1.8" />
+      <module name="integration-tests_test" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>

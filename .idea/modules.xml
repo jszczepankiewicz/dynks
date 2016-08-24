@@ -2,9 +2,15 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/dynks.iml" filepath="$PROJECT_DIR$/dynks.iml" />
-      <module fileurl="file://$PROJECT_DIR$/filter/filter.iml" filepath="$PROJECT_DIR$/filter/filter.iml" />
-      <module fileurl="file://$PROJECT_DIR$/integration-tests/integration-tests.iml" filepath="$PROJECT_DIR$/integration-tests/integration-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dynks.iml" filepath="$PROJECT_DIR$/.idea/modules/dynks.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dynks_main.iml" filepath="$PROJECT_DIR$/.idea/modules/dynks_main.iml" group="dynks" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dynks_test.iml" filepath="$PROJECT_DIR$/.idea/modules/dynks_test.iml" group="dynks" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/filter/filter.iml" filepath="$PROJECT_DIR$/.idea/modules/filter/filter.iml" group="filter" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/filter/filter_main.iml" filepath="$PROJECT_DIR$/.idea/modules/filter/filter_main.iml" group="filter" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/filter/filter_test.iml" filepath="$PROJECT_DIR$/.idea/modules/filter/filter_test.iml" group="filter" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/integration-tests/integration-tests.iml" filepath="$PROJECT_DIR$/.idea/modules/integration-tests/integration-tests.iml" group="integration-tests" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/integration-tests/integration-tests_main.iml" filepath="$PROJECT_DIR$/.idea/modules/integration-tests/integration-tests_main.iml" group="integration-tests" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/integration-tests/integration-tests_test.iml" filepath="$PROJECT_DIR$/.idea/modules/integration-tests/integration-tests_test.iml" group="integration-tests" />
     </modules>
   </component>
 </project>

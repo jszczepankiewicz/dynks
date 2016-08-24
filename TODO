@@ -5,6 +5,7 @@ LONG TERM GOALS:
 - add metrics support
 
 TODO:
+- move default values from java code to reference.conf and treat as present
 - add more tests (for encoding & expectedType)
 - test whether different contentType are respected
 - add findbugs / pmd checks
